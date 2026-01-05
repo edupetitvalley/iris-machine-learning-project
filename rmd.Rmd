@@ -1,0 +1,303 @@
+---
+title: '1'
+output: html_document
+date: "2026-01-04"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# - Load the data
+
+# - Split the data into:
+
+# - training set
+
+# - validation (or test) set
+
+# - Train the model on the training set
+
+# - Evaluate it on the validation set
+
+# - Tune and improve the model
+
+# - Load the data
+
+# Load the dataset named iris into my workspace so I can use it.”
+
+## After this, an object called iris appears in your environment.
+
+## creates a variable called dataset = iris object
+
+dataset \<- iris
+
+```{r}
+# attach the iris dataset to the environment
+data(iris)
+# rename the dataset
+dataset <- iris
+```
+
+------------------------------------------------------------------------
+
+# - Split the data into:
+
+## - training set
+
+## - validation (or test) set
+
+We will split the loaded dataset into two, 80% of which we will use to train our models and 20% that we will hold back as a validation dataset.
+
+```{r}
+set.seed(123)
+split <- sample(1:nrow(dataset), 0.8*nrow(dataset))
+train <- dataset[split, ]
+test  <- dataset[-split, ]
+```
+
+# 3. Summarize Dataset
+
+```{r}
+# dimensions of dataset
+dim(dataset)
+# list types for each attribute
+sapply(dataset, class)
+# 1] 150   5
+# Sepal.Length  Sepal.Width Petal.Length  Petal.Width      Species 
+#    "numeric"    "numeric"    "numeric"    "numeric"     "factor" 
+# take a peek at the first 5 rows of the data
+head(dataset)
+
+# list the levels for the class
+levels(dataset$Species)
+
+# summarize the class distribution
+percentage <- prop.table(table(dataset$Species)) * 100
+# table() creates a table with name of vaues and counts how many times each value appears.
+# prop.table() converts counts into proportions (fractions of the total).
+  #   setosa versicolor  virginica 
+  # 0.33333   0.33333   0.33333 
+cbind(freq=table(dataset$Species), percentage=percentage)
+
+```
+
+```{r}
+# summarize attribute distributions
+summary(dataset)
+```
+
+# 4. Visualize Dataset
+
+## 4.1 Univariate Plots - plots of each individual variable.
+
+Most machine‑learning datasets follow this structure: - Columns 1 to n‑1 → numeric predictors (inputs, features like flower parts lenght) - Last column → target variable (output, label like species label) The classic example is the iris dataset, will try to predict a species based on lenghts
+
+```{r}
+# split input and output
+# dataframe[ rows , columns ]
+x <- dataset[,1:4] # [, (all rows), 1:4 columns 1 to 4
+y <- dataset[,5]   #all rows from col 5
+# dataset
+# x
+# y
+```
+
+```{r}
+# boxplot for each attribute on one image
+par(mfrow=c(1,4))
+  for(i in 1:4) {
+  boxplot(x[,i], main=names(iris)[i])
+  }
+
+# barplot for class breakdown
+# plot(y)
+```
+
+```{r}
+par(mfrow = c(1, 4))
+```
+
+## 4.2 Multivariate Plots
+
+Now we can look at the interactions between the variables.
+
+First let’s look at scatterplots of all pairs of attributes and color the points by class. In addition, because the scatterplots show that points for each class are generally separate, we can draw ellipses around them.
+
+```{r}
+# scatterplot matrix
+# featurePlot(x=x, y=y, plot="ellipse")
+pairs(iris[, 1:4], col = iris$Species)
+```
+
+```{r}
+library(caret)
+
+myFeaturePlot = featurePlot(x=x, y=y, plot="ellipse")
+# scatterplot matrix
+print(myFeaturePlot)
+# featurePlot(x=x, y=y, plot="ellipse")
+
+# x
+# y
+```
+
+```{r}
+# box and whisker plots for each attribute
+featurePlot(x=x, y=y, plot="box")
+```
+
+```{r}
+# density plots for each attribute by class value
+scales <- list(x=list(relation="free"), y=list(relation="free"))
+featurePlot(x=x, y=y, plot="density", scales=scales)
+```
+
+### Petal Length vs Petal Width
+```{r}
+plot(iris$Petal.Length, iris$Petal.Width,
+     col = iris$Species,
+     pch = 19,
+     xlab = "Petal Length (cm)",
+     ylab = "Petal Width (cm)",
+     main = "Petal Size Separates Species")
+```
+
+### Sepal Length vs Sepal Width
+```{r}
+plot(iris$Sepal.Length, iris$Sepal.Width,
+     col = iris$Species,
+     pch = 19,
+     xlab = "Sepal Length (cm)",
+     ylab = "Sepal Width (cm)",
+     main = "Sepal Measurements (Weaker Separation)")
+```
+
+### LDA Projection (LD1)
+This shows the linear discriminant pattern directly.
+
+```{r}
+fit <- lda(Species ~ ., data = iris)
+lda_values <- as.matrix(iris[,1:4]) %*% fit$scaling[,1]
+
+plot(lda_values,
+     col = iris$Species,
+     pch = 19,
+     xlab = "Index",
+     ylab = "LD1 (linear discriminant score)",
+     main = "Projection onto LD1")
+```
+
+```{r}
+par(mfrow=c(2,2))
+boxplot(Sepal.Length ~ Species, data=iris, main="Sepal Length (cm)")
+boxplot(Sepal.Width  ~ Species, data=iris, main="Sepal Width (cm)")
+boxplot(Petal.Length ~ Species, data=iris, main="Petal Length (cm)")
+boxplot(Petal.Width  ~ Species, data=iris, main="Petal Width (cm)")
+```
+
+
+
+
+# 5. Evaluate Some Algorithms
+
+Now it is time to create some models of the data and estimate their accuracy on unseen data.
+
+Here is what we are going to cover in this step:
+
+```         
+Set-up the test harness to use 10-fold cross validation.
+Build 5 different models to predict species from flower measurements
+Select the best model.
+```
+
+## 5.1 Test Harness
+
+```{r}
+# Run algorithms using 10-fold cross validation
+control <- trainControl(method="cv", number=10) #- Use 10‑fold cross‑validation
+metric <- "Accuracy"
+```
+
+## 5.2 Build Models
+
+We don’t know which algorithms would be good on this problem or what configurations to use. We get an idea from the plots that some of the classes are partially linearly separable in some dimensions, so we are expecting generally good results.
+
+Let’s evaluate 5 different algorithms:
+
+```         
+Linear Discriminant Analysis (LDA)
+Classification and Regression Trees (CART).
+k-Nearest Neighbors (kNN).
+Support Vector Machines (SVM) with a linear kernel.
+Random Forest (RF)
+```
+
+```{r}
+# a) linear algorithms
+set.seed(7)
+fit.lda <- train(Species~., data=dataset, method="lda", metric=metric, trControl=control)
+# b) nonlinear algorithms
+# CART
+set.seed(7)
+fit.cart <- train(Species~., data=dataset, method="rpart", metric=metric, trControl=control)
+# kNN
+set.seed(7)
+fit.knn <- train(Species~., data=dataset, method="knn", metric=metric, trControl=control)
+# c) advanced algorithms
+# SVM
+set.seed(7)
+fit.svm <- train(Species~., data=dataset, method="svmRadial", metric=metric, trControl=control)
+# Random Forest
+set.seed(7)
+fit.rf <- train(Species~., data=dataset, method="rf", metric=metric, trControl=control)
+```
+```A dataset is linearly separable if:
+There exists some linear combination of features
+that separates the classes with a straight boundary.
+```
+```{r}
+library(MASS)
+
+fit <- lda(Species ~ ., data = iris)
+fit$scaling
+
+lda_values <- as.matrix(iris[,1:4]) %*% fit$scaling[,1]
+
+plot(lda_values, col = iris$Species,
+     pch = 19,
+     xlab = "LD1 (linear combination)",
+     ylab = "LD1 (linear discriminant score)",
+     main = "Projection onto the LDA Linear Discriminant")
+```
+
+## 5.3 Select Best Model
+```{r}
+# summarize accuracy of models
+results <- resamples(list(lda=fit.lda, cart=fit.cart, knn=fit.knn, svm=fit.svm, rf=fit.rf))
+summary(results)
+```
+We can also create a plot of the model evaluation results and compare the spread and the mean accuracy of each model. There is a population of accuracy measures for each algorithm because each algorithm was evaluated 10 times (10 fold cross validation).
+```{r}
+# compare accuracy of models
+dotplot(results)
+```
+```{r}
+# summarize Best Model
+print(fit.lda)
+summary(fit.lda)
+```
+
+
+## 6. Make Predictions
+
+We can run the LDA model directly on the validation set and summarize the results in a confusion matrix.
+
+```{r}
+# estimate skill of LDA on the validation dataset
+predictions <- predict(fit.lda, test)
+confusionMatrix(predictions, test$Species)
+```
+
+
+
