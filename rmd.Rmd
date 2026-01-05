@@ -1,5 +1,6 @@
 ---
-title: '1'
+title: 'Supervised Learning on the Iris Dataset'
+author: "Eduardo Vallejo"
 output: html_document
 date: "2026-01-04"
 ---
@@ -8,22 +9,28 @@ date: "2026-01-04"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# - Load the data
+```
+# 1 - Load the data
 
-# - Split the data into:
+# 2 - Split the data into:
 
-# - training set
+  # - training set
 
-# - validation (or test) set
+  # - validation (or test) set
 
-# - Train the model on the training set
 
-# - Evaluate it on the validation set
+# 3 - Train the model on the training set
 
-# - Tune and improve the model
+# 4 - Evaluate it on the validation set
 
-# - Load the data
+# 5 - Tune and improve the model
 
+
+```
+
+## 1 - Load the data
+
+```
 # Load the dataset named iris into my workspace so I can use it.”
 
 ## After this, an object called iris appears in your environment.
@@ -31,6 +38,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ## creates a variable called dataset = iris object
 
 dataset \<- iris
+```
+
 
 ```{r}
 # attach the iris dataset to the environment
@@ -43,11 +52,14 @@ dataset <- iris
 
 # - Split the data into:
 
+```
 ## - training set
 
 ## - validation (or test) set
 
 We will split the loaded dataset into two, 80% of which we will use to train our models and 20% that we will hold back as a validation dataset.
+```
+
 
 ```{r}
 set.seed(123)
@@ -177,6 +189,7 @@ plot(iris$Sepal.Length, iris$Sepal.Width,
 This shows the linear discriminant pattern directly.
 
 ```{r}
+library(MASS)
 fit <- lda(Species ~ ., data = iris)
 lda_values <- as.matrix(iris[,1:4]) %*% fit$scaling[,1]
 
@@ -194,6 +207,7 @@ boxplot(Sepal.Length ~ Species, data=iris, main="Sepal Length (cm)")
 boxplot(Sepal.Width  ~ Species, data=iris, main="Sepal Width (cm)")
 boxplot(Petal.Length ~ Species, data=iris, main="Petal Length (cm)")
 boxplot(Petal.Width  ~ Species, data=iris, main="Petal Width (cm)")
+
 ```
 
 
@@ -297,6 +311,9 @@ We can run the LDA model directly on the validation set and summarize the result
 # estimate skill of LDA on the validation dataset
 predictions <- predict(fit.lda, test)
 confusionMatrix(predictions, test$Species)
+```
+```{r}
+
 ```
 
 
